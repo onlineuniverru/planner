@@ -81,16 +81,19 @@ body {
   cursor: pointer; box-shadow: var(--shadow);
 }
 
-/* Табы */
+/* Табы (горизонтальная прокрутка, если не влезают) */
 .tabs {
   display: flex; background: var(--card);
   border-bottom: 1px solid var(--border); margin-bottom: 16px;
   position: sticky; top: 0; z-index: 10;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.tabs::-webkit-scrollbar { display: none; }
 .tab {
-  flex: 1; padding: 12px 6px; border: none; background: transparent;
-  font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer;
-  border-bottom: 2px solid transparent;
+  flex: 1; min-width: 82px; padding: 12px 6px; border: none; background: transparent;
+  font-size: 13.5px; font-weight: 600; color: var(--muted); cursor: pointer;
+  border-bottom: 2px solid transparent; white-space: nowrap;
 }
 .tab.active { color: var(--brand); border-bottom-color: var(--brand); }
 
