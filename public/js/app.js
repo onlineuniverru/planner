@@ -69,7 +69,7 @@ function bindTabs() {
 }
 
 // --- Роутер ---
-const views = ['today', 'all', 'projects', 'done', 'settings'];
+const views = ['today', 'all', 'done', 'settings'];
 function startRouter() {
   window.addEventListener('hashchange', render);
   if (!location.hash) location.hash = '#/today';
@@ -88,8 +88,8 @@ function render() {
   const view = $('#view');
   if (v === 'today') renderToday(view);
   else if (v === 'all') renderAll(view);
-  else if (v === 'projects') renderProjects(view);
   else if (v === 'done') renderDone(view);
+  else if (v === 'projects') { location.hash = '#/settings'; renderSettings(view); }
   else if (v === 'settings') renderSettings(view);
 }
 
@@ -318,6 +318,11 @@ function promptMove(id) {
 async function renderSettings(view) {
   view.innerHTML = `
     <div class="section">
+      <h2>📁 Проекты</h2>
+      <div class="filters"><button class="btn btn-primary" id="btn-new-project">＋ Новый проект</button></div>
+      <div id="proj-list" class="empty" style="margin-top:10px">Загрузка...</div>
+    </div>
+    <div class="section">
       <h2>🏷 Категории</h2>
       <div id="cat-list"></div>
       <form id="cat-form" class="comment-form" style="margin-top:10px">
@@ -341,6 +346,23 @@ async function renderSettings(view) {
 
   // категории: список с удалением/переименованием
   await refreshData();
+
+  // проекты: список + создание
+  const projList = $('#proj-list');
+  projList.innerHTML = ''; projList.className = '';
+  if (!state.projects.length) { projList.className = 'empty'; projList.textContent = 'Нет проектов'; }
+  state.projects.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'project-card' + (p.status === 'ARCHIVED' ? ' archived' : '');
+    const active = p.active_count || 0, done = p.done_count || 0;
+    el.innerHTML = `<h4>${esc(p.name)} ${p.status === 'ARCHIVED' ? '<span class="p-arch">(архив)</span>' : ''}</h4>
+      ${p.description ? `<p class="p-desc">${esc(p.description)}</p>` : ''}
+      <div class="p-stats"><span>● Активных: ${active}</span><span>✓ Выполнено: ${done}</span><span>Всего: ${active + done}</span></div>`;
+    el.onclick = () => openProjectModal(p);
+    projList.appendChild(el);
+  });
+  $('#btn-new-project').onclick = () => openProjectModal(null);
+
   const catList = $('#cat-list');
   if (!state.categories.length) catList.innerHTML = '<div class="empty" style="padding:12px">Категорий нет</div>';
   state.categories.forEach(c => {
