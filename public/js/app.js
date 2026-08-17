@@ -582,8 +582,13 @@ init();
 // --- PWA + Browser-уведомления (Этап 6) ---
 function initBrowserNotifications() {
   // Регистрация service worker
+  // Service Worker отключён: кэшировал устаревший интерфейс.
+  // Одноразовая перерегистрация sw.js, чтобы старые воркеры у клиентов удалили себя и свои кэши.
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register(BASE + '/sw.js').catch(() => {});
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister());
+    }).catch(() => {});
+  }
   }
   // Полинг браузерных напоминаний (после логина проверяем каждые 30с)
   setInterval(checkBrowserNotifications, 30000);
