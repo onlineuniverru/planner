@@ -8,6 +8,7 @@ const { startReminderWorker } = require('./lib/reminder-worker');
 const { startBot } = require('./lib/bot');
 
 const app = express();
+const PgSession = require('connect-pg-simple')(session);
 const PORT = parseInt(process.env.PORT || '3400');
 
 app.locals.pool = pool;
@@ -16,6 +17,11 @@ app.locals.pool = pool;
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
+  store: new PgSession({
+    pool: require('./lib/db').pool,
+    tableName: 'session',
+    createTableIfMissing: true
+  }),
   secret: process.env.SESSION_SECRET || 'planner-secret',
   resave: false,
   saveUninitialized: false,
