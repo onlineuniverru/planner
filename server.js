@@ -5,6 +5,7 @@ const session = require('express-session');
 const path = require('path');
 const { pool } = require('./lib/db');
 const { startReminderWorker } = require('./lib/reminder-worker');
+const { startBot } = require('./lib/bot');
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3400');
@@ -47,6 +48,9 @@ app.get('*', (req, res) => {
 
 // Reminder-воркер (Telegram + browser polling endpoint)
 startReminderWorker(app);
+
+// Telegram-ИИ-бот (диалог + вечерний разбор)
+startBot();
 
 // Экспорт для тестов
 module.exports = app;
