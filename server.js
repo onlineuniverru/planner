@@ -28,6 +28,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Auth guard для /api (кроме auth)
 app.use('/api', (req, res, next) => {
   if (req.path.startsWith('/auth/')) return next();
+  if (req.path.startsWith('/calendar/')) return next(); // ICS-фид: свой токен
   if (!req.session || !req.session.userId) {
     return res.status(401).json({ error: 'Требуется авторизация' });
   }
@@ -40,6 +41,7 @@ app.use('/api/projects', require('./routes/projects'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/comments', require('./routes/comments'));
+app.use('/api/calendar', require('./routes/calendar'));
 
 // SPA fallback
 app.get('*', (req, res) => {
