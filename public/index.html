@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a73e8">
+  <title>Планировщик</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗓️</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- ЭКРАН ЛОГИНА -->
+  <div id="login-screen" class="login-screen hidden">
+    <form id="login-form" class="login-card">
+      <h1>🗓️ Планировщик</h1>
+      <p class="login-sub">Личный календарь задач</p>
+      <input id="login-user" type="text" placeholder="Логин" autocomplete="username" required>
+      <input id="login-pass" type="password" placeholder="Пароль" autocomplete="current-password" required>
+      <button type="submit" class="btn btn-primary">Войти</button>
+      <div id="login-error" class="login-error"></div>
+    </form>
+  </div>
+
+  <!-- ПРИЛОЖЕНИЕ -->
+  <div id="app" class="app hidden">
+    <!-- Шапка -->
+    <header class="topbar">
+      <div class="brand">🗓️ <span>Планировщик</span></div>
+      <div class="topbar-date" id="topbar-date"></div>
+      <button class="btn-add" id="btn-quick-add" title="Быстрая задача">+</button>
+    </header>
+
+    <!-- Навигация -->
+    <nav class="tabs" id="tabs">
+      <button class="tab" data-view="today">Сегодня</button>
+      <button class="tab" data-view="all">Все задачи</button>
+      <button class="tab" data-view="projects">Проекты</button>
+      <button class="tab" data-view="done">Выполненные</button>
+    </nav>
+
+    <main id="view" class="view"></main>
+  </div>
+
+  <!-- МОДАЛКА быстрого создания -->
+  <div id="quick-modal" class="modal hidden">
+    <div class="modal-card modal-sm">
+      <div class="modal-head">
+        <h3>Новая задача</h3>
+        <button class="modal-close" data-close="quick-modal">✕</button>
+      </div>
+      <form id="quick-form" class="form">
+        <input id="q-title" type="text" placeholder="Что нужно сделать?" autofocus required>
+        <div class="form-row">
+          <label>Дата <input id="q-date" type="date" required></label>
+        </div>
+        <details class="quick-more">
+          <summary>Дополнительно</summary>
+          <div class="form-row">
+            <label>Проект <select id="q-project"></select></label>
+          </div>
+          <div class="form-row">
+            <label>Категория <select id="q-category"></select></label>
+          </div>
+          <div class="form-row">
+            <label>Время <input id="q-time" type="time"></label>
+            <label>Приоритет
+              <select id="q-priority">
+                <option value="LOW">Низкий</option>
+                <option value="NORMAL" selected>Средний</option>
+                <option value="HIGH">Высокий</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-row">
+            <label>Напомнить
+              <select id="q-remind">
+                <option value="">—</option>
+                <option value="5m">за 5 мин</option>
+                <option value="15m">за 15 мин</option>
+                <option value="1h">за 1 час</option>
+                <option value="1d">за день</option>
+              </select>
+            </label>
+            <label>Повторение
+              <select id="q-repeat">
+                <option value="">Нет</option>
+                <option value="DAILY">Ежедневно</option>
+                <option value="WEEKLY">Еженедельно</option>
+                <option value="MONTHLY">Ежемесячно</option>
+              </select>
+            </label>
+          </div>
+          <textarea id="q-desc" placeholder="Описание (необязательно)" rows="2"></textarea>
+        </details>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Создать</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА карточки задачи -->
+  <div id="task-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Задача</h3>
+        <button class="modal-close" data-close="task-modal">✕</button>
+      </div>
+      <form id="task-form" class="form">
+        <input id="t-title" type="text" required>
+        <div class="form-grid">
+          <label>Проект <select id="t-project"></select></label>
+          <label>Категория <select id="t-category"></select></label>
+          <label>Дата <input id="t-date" type="date"></label>
+          <label>Время <input id="t-time" type="time"></label>
+          <label>Приоритет
+            <select id="t-priority">
+              <option value="LOW">Низкий</option>
+              <option value="NORMAL">Средний</option>
+              <option value="HIGH">Высокий</option>
+            </select>
+          </label>
+          <label>Повторение
+            <select id="t-repeat">
+              <option value="">Нет</option>
+              <option value="DAILY">Ежедневно</option>
+              <option value="WEEKLY">Еженедельно</option>
+              <option value="MONTHLY">Ежемесячно</option>
+            </select>
+          </label>
+          <label>Напомнить
+            <select id="t-remind">
+              <option value="">—</option>
+              <option value="5m">за 5 мин</option>
+              <option value="15m">за 15 мин</option>
+              <option value="1h">за 1 час</option>
+              <option value="1d">за день</option>
+            </select>
+          </label>
+          <label>Статус
+            <select id="t-status">
+              <option value="TODO">В работе</option>
+              <option value="DONE">Выполнено</option>
+              <option value="CANCELLED">Отменено</option>
+            </select>
+          </label>
+        </div>
+        <textarea id="t-desc" placeholder="Описание" rows="3"></textarea>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="t-delete">Удалить</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn btn-ghost" id="t-reopen">▼ Вернуть в работу</button>
+          <button type="button" class="btn btn-success" id="t-complete">✓ Выполнено</button>
+          <button type="submit" class="btn btn-primary">Сохранить</button>
+        </div>
+      </form>
+      <!-- Комментарии -->
+      <div class="comments">
+        <h4>Комментарии</h4>
+        <div id="comments-list" class="comments-list"></div>
+        <form id="comment-form" class="comment-form">
+          <input id="c-text" type="text" placeholder="Добавить комментарий...">
+          <button type="submit" class="btn btn-primary btn-sm">→</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Проект-модалка -->
+  <div id="project-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Проект</h3>
+        <button class="modal-close" data-close="project-modal">✕</button>
+      </div>
+      <form id="project-form" class="form">
+        <input id="p-name" type="text" placeholder="Название проекта" required>
+        <textarea id="p-desc" placeholder="Описание" rows="2"></textarea>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="p-archive">Архивировать</button>
+          <span class="spacer"></span>
+          <button type="submit" class="btn btn-primary">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

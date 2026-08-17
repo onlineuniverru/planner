@@ -1,0 +1,21 @@
+{
+  "name": "personal-planner",
+  "version": "0.1.0",
+  "description": "Личный календарь-планировщик: проекты, задачи, напоминания (Telegram + browser)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "db:migrate": "node migrations/run.js",
+    "db:seed": "node seed/run.js",
+    "db:backup": "pg_dump -U planner -h localhost planner > backups/planner_$(date +%Y%m%d_%H%M%S).sql",
+    "test": "node test/smoke.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0",
+    "pg": "^8.13.0"
+  }
+}
