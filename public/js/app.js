@@ -589,7 +589,6 @@ function initBrowserNotifications() {
       regs.forEach(r => r.unregister());
     }).catch(() => {});
   }
-  }
   // Полинг браузерных напоминаний (после логина проверяем каждые 30с)
   setInterval(checkBrowserNotifications, 30000);
 }
