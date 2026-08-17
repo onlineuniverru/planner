@@ -37,6 +37,7 @@
       <button class="tab" data-view="all">Все задачи</button>
       <button class="tab" data-view="projects">Проекты</button>
       <button class="tab" data-view="done">Выполненные</button>
+      <button class="tab" data-view="settings">Настройки</button>
     </nav>
 
     <main id="view" class="view"></main>
@@ -50,7 +51,10 @@
         <button class="modal-close" data-close="quick-modal">✕</button>
       </div>
       <form id="quick-form" class="form">
-        <input id="q-title" type="text" placeholder="Что нужно сделать?" autofocus required>
+        <div class="voice-row">
+          <input id="q-title" type="text" placeholder="Что нужно сделать?" autofocus required>
+          <button type="button" id="q-voice" class="btn-voice" title="Надиктовать">🎤</button>
+        </div>
         <div class="form-row">
           <label>Дата <input id="q-date" type="date" required></label>
         </div>

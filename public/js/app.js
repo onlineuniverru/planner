@@ -69,7 +69,7 @@ function bindTabs() {
 }
 
 // --- Роутер ---
-const views = ['today', 'all', 'projects', 'done'];
+const views = ['today', 'all', 'projects', 'done', 'settings'];
 function startRouter() {
   window.addEventListener('hashchange', render);
   if (!location.hash) location.hash = '#/today';
@@ -90,6 +90,7 @@ function render() {
   else if (v === 'all') renderAll(view);
   else if (v === 'projects') renderProjects(view);
   else if (v === 'done') renderDone(view);
+  else if (v === 'settings') renderSettings(view);
 }
 
 function updateTopbarDate() {
@@ -313,9 +314,113 @@ function promptMove(id) {
     .catch(e => toast(e.message, 'error'));
 }
 
+// --- Настройки: категории + пароль + выход ---
+async function renderSettings(view) {
+  view.innerHTML = `
+    <div class="section">
+      <h2>🏷 Категории</h2>
+      <div id="cat-list"></div>
+      <form id="cat-form" class="comment-form" style="margin-top:10px">
+        <input id="cat-new" type="text" placeholder="Новая категория..." maxlength="50">
+        <button type="submit" class="btn btn-primary btn-sm">＋</button>
+      </form>
+    </div>
+    <div class="section">
+      <h2>🔑 Смена пароля</h2>
+      <form id="pass-form" class="form">
+        <input id="pass-cur" type="password" placeholder="Текущий пароль" autocomplete="current-password" required>
+        <input id="pass-new" type="password" placeholder="Новый пароль (мин. 6 символов)" autocomplete="new-password" required minlength="6">
+        <input id="pass-new2" type="password" placeholder="Повторите новый пароль" autocomplete="new-password" required minlength="6">
+        <button type="submit" class="btn btn-primary">Сменить пароль</button>
+      </form>
+    </div>
+    <div class="section">
+      <h2>👤 Аккаунт</h2>
+      <button id="btn-logout" class="btn btn-ghost">Выйти</button>
+    </div>`;
+
+  // категории: список с удалением/переименованием
+  await refreshData();
+  const catList = $('#cat-list');
+  if (!state.categories.length) catList.innerHTML = '<div class="empty" style="padding:12px">Категорий нет</div>';
+  state.categories.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'cat-row';
+    row.innerHTML = `<span class="cat-name">${esc(c.name)}</span>
+      <button class="icon-btn" data-rename="${c.id}" title="Переименовать">✏️</button>
+      <button class="icon-btn" data-delcat="${c.id}" title="Удалить">🗑</button>`;
+    catList.appendChild(row);
+  });
+  $$('[data-rename]', catList).forEach(b => b.onclick = async () => {
+    const c = state.categories.find(x => x.id == b.dataset.rename);
+    const name = prompt('Новое название категории:', c.name);
+    if (!name || !name.trim() || name.trim() === c.name) return;
+    await api('PUT', `/categories/${c.id}`, { name: name.trim() });
+    toast('Категория обновлена', 'success'); renderSettings(view);
+  });
+  $$('[data-delcat]', catList).forEach(b => b.onclick = async () => {
+    if (!confirm('Удалить категорию? Задачи останутся без категории.')) return;
+    await api('DELETE', `/categories/${b.dataset.delcat}`);
+    toast('Категория удалена', 'success'); renderSettings(view);
+  });
+  $('#cat-form').onsubmit = async e => {
+    e.preventDefault();
+    const name = $('#cat-new').value.trim();
+    if (!name) return;
+    await api('POST', '/categories', { name });
+    $('#cat-new').value = '';
+    toast('Категория добавлена', 'success'); renderSettings(view);
+  };
+
+  // смена пароля
+  $('#pass-form').onsubmit = async e => {
+    e.preventDefault();
+    const cur = $('#pass-cur').value, nw = $('#pass-new').value, nw2 = $('#pass-new2').value;
+    if (nw !== nw2) { toast('Новые пароли не совпадают', 'error'); return; }
+    try {
+      await api('POST', '/auth/password', { current_password: cur, new_password: nw });
+      toast('✓ Пароль изменён', 'success');
+      e.target.reset();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  $('#btn-logout').onclick = async () => {
+    await api('POST', '/auth/logout');
+    location.reload();
+  };
+}
+
 // --- Быстрое создание ---
 function bindQuickAdd() {
   $('#btn-quick-add').onclick = openQuickModal;
+  bindVoiceInput();
+}
+
+// --- Голосовой ввод (Web Speech API) ---
+let recog = null, recognizing = false;
+function bindVoiceInput() {
+  const btn = $('#q-voice');
+  if (!btn) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { btn.style.display = 'none'; return; } // нет поддержки — прячем
+  btn.onclick = () => {
+    if (recognizing) { recog.stop(); return; }
+    recog = new SR();
+    recog.lang = 'ru-RU';
+    recog.interimResults = true;
+    recog.continuous = false;
+    const input = $('#q-title');
+    const base = input.value ? input.value + ' ' : '';
+    recog.onresult = e => {
+      let txt = '';
+      for (const r of e.results) txt += r[0].transcript;
+      input.value = base + txt;
+    };
+    recog.onstart = () => { recognizing = true; btn.classList.add('rec'); btn.textContent = '⏺'; };
+    recog.onend = () => { recognizing = false; btn.classList.remove('rec'); btn.textContent = '🎤'; input.focus(); };
+    recog.onerror = ev => { if (ev.error !== 'aborted') toast('Ошибка микрофона: ' + ev.error, 'error'); };
+    recog.start();
+  };
 }
 function openQuickModal() {
   const today = new Date().toISOString().slice(0,10);

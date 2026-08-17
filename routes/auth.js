@@ -27,4 +27,20 @@ router.post('/logout', (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
 });
 
+// Смена пароля (текущий + новый)
+router.post('/password', async (req, res) => {
+  try {
+    const { current_password, new_password } = req.body || {};
+    if (!current_password || !new_password) return res.status(400).json({ error: 'Укажите текущий и новый пароль' });
+    if (String(new_password).length < 6) return res.status(400).json({ error: 'Новый пароль минимум 6 символов' });
+    const { rows } = await pool.query(`SELECT * FROM app_user WHERE id = $1`, [req.session.userId]);
+    const user = rows[0];
+    const ok = user && await bcrypt.compare(current_password, user.password_hash);
+    if (!ok) return res.status(401).json({ error: 'Неверный текущий пароль' });
+    const hash = await bcrypt.hash(String(new_password), 10);
+    await pool.query(`UPDATE app_user SET password_hash = $2 WHERE id = $1`, [user.id, hash]);
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Ошибка сервера' }); }
+});
+
 module.exports = router;
