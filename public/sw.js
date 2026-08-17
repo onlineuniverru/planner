@@ -1,5 +1,6 @@
-/* Service Worker для PWA: кэш статики + базовый оффлайн. */
-const CACHE = 'planner-v1';
+/* Service Worker для PWA: сеть первична, кэш — оффлайн-фолбэк.
+   CACHE_VERSION поднимается при каждом деплое, чтобы клиенты обновлялись. */
+const CACHE = 'planner-v4';
 const CORE = ['./', './index.html', './css/style.css', './js/app.js', './manifest.json'];
 
 self.addEventListener('install', e => {
@@ -11,11 +12,12 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   // Не кэшируем API
   if (e.request.url.includes('/api/')) return;
+  // Сеть первична; в кэш — только успешные GET
   e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
+    fetch(e.request).then(res => {
       const copy = res.clone();
       if (res.ok && e.request.method === 'GET') caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
       return res;
-    }).catch(() => caches.match('./'))
-  ));
+    }).catch(() => caches.match(e.request).then(hit => hit || caches.match('./')))
+  );
 });
