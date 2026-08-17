@@ -45,6 +45,19 @@ router.get('/feed.ics', async (req, res) => {
     const nowUtc = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     const timezoneMs = 'Europe/Moscow';
 
+    // VTIMEZONE обязателен по RFC 5545 для TZID (iOS строго к этому)
+    const vtimezone = [
+      'BEGIN:VTIMEZONE',
+      'TZID:' + timezoneMs,
+      'BEGIN:STANDARD',
+      'DTSTART:19700101T000000',
+      'TZOFFSETFROM:+0300',
+      'TZOFFSETTO:+0300',
+      'TZNAME:MSK',
+      'END:STANDARD',
+      'END:VTIMEZONE'
+    ].join('\r\n');
+
     let body = '';
     body += 'BEGIN:VCALENDAR\r\n';
     body += 'VERSION:2.0\r\n';
@@ -53,6 +66,7 @@ router.get('/feed.ics', async (req, res) => {
     body += 'METHOD:PUBLISH\r\n';
     body += 'X-WR-CALNAME:Личные задачи (планировщик)\r\n';
     body += 'X-WR-TIMEZONE:' + timezoneMs + '\r\n';
+    body += vtimezone + '\r\n';
     for (const t of rows) {
       const dtv = dt(t.due_date, t.due_time);
       if (!dtv) continue;
